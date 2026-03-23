@@ -26,7 +26,7 @@ fn main() {
                 titlebar: Some(TitlebarOptions {
                     title: Some("LILYGO Spark NT".into()),
                     appears_transparent: true,
-                    ..Default::default()
+                    traffic_light_position: Some(point(px(12.0), px(12.0))),
                 }),
                 window_min_size: Some(Size {
                     width: px(800.0),

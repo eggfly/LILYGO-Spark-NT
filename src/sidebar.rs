@@ -20,13 +20,16 @@ impl SparkApp {
             .border_color(glass_border());
 
         // Logo header - matches Electron: gradient icon + title + subtitle
+        // On macOS, add top padding for traffic light buttons
+        let header_top_padding = if cfg!(target_os = "macos") { px(28.0) } else { px(0.0) };
         sidebar = sidebar.child(
             div()
                 .flex()
                 .flex_col()
                 .items_center()
                 .justify_center()
-                .h(px(96.0))
+                .pt(header_top_padding)
+                .h(px(96.0 + if cfg!(target_os = "macos") { 28.0 } else { 0.0 }))
                 .border_b_1()
                 .border_color(glass_border())
                 .child(

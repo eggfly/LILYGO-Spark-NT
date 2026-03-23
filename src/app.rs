@@ -245,7 +245,7 @@ impl Render for SparkApp {
             Page::Settings => self.render_settings(cx).into_any_element(),
         };
 
-        div()
+        let mut root = div()
             .size_full()
             .flex()
             .flex_col()
@@ -253,15 +253,110 @@ impl Render for SparkApp {
                 135.,
                 linear_color_stop(hsla(240. / 360., 0.15, 0.10, 1.0), 0.),
                 linear_color_stop(hsla(260. / 360., 0.12, 0.12, 1.0), 1.0),
-            ))
+            ));
+
+        // On Windows, add custom window control buttons at the top
+        #[cfg(target_os = "windows")]
+        {
+            root = root.child(self.render_windows_titlebar(cx));
+        }
+
+        root = root.child(
+            div()
+                .flex_1()
+                .flex()
+                .flex_row()
+                .overflow_hidden()
+                .child(self.render_sidebar(cx))
+                .child(content),
+        );
+
+        root
+    }
+}
+
+#[cfg(target_os = "windows")]
+impl SparkApp {
+    fn render_windows_titlebar(&self, _cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .id("windows-titlebar")
+            .w_full()
+            .h(px(36.0))
+            .flex()
+            .items_center()
+            .justify_between()
+            .window_control_area(WindowControlArea::Drag)
+            // Title on left
             .child(
                 div()
-                    .flex_1()
+                    .pl(px(12.0))
+                    .text_xs()
+                    .text_color(rgb(TEXT_MUTED))
+                    .child("LILYGO Spark NT"),
+            )
+            // Window control buttons on right
+            .child(
+                div()
                     .flex()
-                    .flex_row()
-                    .overflow_hidden()
-                    .child(self.render_sidebar(cx))
-                    .child(content),
+                    .items_center()
+                    .h_full()
+                    // Minimize
+                    .child(
+                        div()
+                            .id("win-minimize")
+                            .w(px(46.0))
+                            .h_full()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .cursor_pointer()
+                            .hover(|s| s.bg(hsla(0., 0., 0.5, 0.1)))
+                            .window_control_area(WindowControlArea::Min)
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .text_color(rgb(TEXT_MUTED))
+                                    .child("─"),
+                            ),
+                    )
+                    // Maximize
+                    .child(
+                        div()
+                            .id("win-maximize")
+                            .w(px(46.0))
+                            .h_full()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .cursor_pointer()
+                            .hover(|s| s.bg(hsla(0., 0., 0.5, 0.1)))
+                            .window_control_area(WindowControlArea::Max)
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .text_color(rgb(TEXT_MUTED))
+                                    .child("□"),
+                            ),
+                    )
+                    // Close
+                    .child(
+                        div()
+                            .id("win-close")
+                            .w(px(46.0))
+                            .h_full()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .cursor_pointer()
+                            .hover(|s| s.bg(hsla(0., 0.7, 0.5, 0.8)))
+                            .window_control_area(WindowControlArea::Close)
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .text_color(rgb(TEXT_MUTED))
+                                    .child("✕"),
+                            ),
+                    ),
             )
     }
 }
