@@ -69,7 +69,12 @@ impl SparkApp {
 
         let tool_content: AnyElement = match active_idx {
             0 => self.render_resistor_calc(),
+            2 => self.render_voltage_divider(),
+            3 => self.render_rc_time_constant(),
             4 => self.render_ohms_law_calc(),
+            5 => self.render_555_timer(),
+            7 => self.render_led_resistor(),
+            8 => self.render_battery_life(),
             _ => self.render_tool_placeholder(active_idx),
         };
 
@@ -165,6 +170,128 @@ impl SparkApp {
                     .gap_2()
                     .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("V = I × R"))
                     .child(div().text_xl().text_color(rgb(primary)).child("12 V = 0.5 A × 24 Ω")),
+            )
+            .into_any_element()
+    }
+
+    fn render_voltage_divider(&self) -> AnyElement {
+        let primary = self.primary();
+        glass_card_div()
+            .p_6()
+            .flex()
+            .flex_col()
+            .gap_4()
+            .child(div().text_color(rgb(TEXT_PRIMARY)).child("🔢 Voltage Divider Calculator"))
+            .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Calculate output voltage from a resistive voltage divider"))
+            .child(
+                div().flex().flex_wrap().gap_4()
+                    .child(Self::calc_field("Input Voltage (Vin)", "12", "V", primary))
+                    .child(Self::calc_field("R1 (Top)", "10", "kΩ", AMBER))
+                    .child(Self::calc_field("R2 (Bottom)", "10", "kΩ", AMBER)),
+            )
+            .child(
+                div().mt_2().p_4().rounded_lg().bg(hsla(0., 0., 0., 0.2))
+                    .flex().flex_col().items_center().gap_2()
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Vout = Vin × R2 / (R1 + R2)"))
+                    .child(div().text_xl().text_color(rgb(GREEN)).child("Vout = 6.00 V")),
+            )
+            .into_any_element()
+    }
+
+    fn render_rc_time_constant(&self) -> AnyElement {
+        let primary = self.primary();
+        glass_card_div()
+            .p_6()
+            .flex()
+            .flex_col()
+            .gap_4()
+            .child(div().text_color(rgb(TEXT_PRIMARY)).child("⏱ RC Time Constant Calculator"))
+            .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Calculate time constant for RC circuits"))
+            .child(
+                div().flex().flex_wrap().gap_4()
+                    .child(Self::calc_field("Resistance (R)", "10", "kΩ", primary))
+                    .child(Self::calc_field("Capacitance (C)", "100", "μF", AMBER)),
+            )
+            .child(
+                div().mt_2().p_4().rounded_lg().bg(hsla(0., 0., 0., 0.2))
+                    .flex().flex_col().items_center().gap_2()
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("τ = R × C"))
+                    .child(div().text_xl().text_color(rgb(primary)).child("τ = 1.000 s"))
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("5τ (99.3% charge) = 5.000 s")),
+            )
+            .into_any_element()
+    }
+
+    fn render_555_timer(&self) -> AnyElement {
+        let primary = self.primary();
+        glass_card_div()
+            .p_6()
+            .flex()
+            .flex_col()
+            .gap_4()
+            .child(div().text_color(rgb(TEXT_PRIMARY)).child("⏲ 555 Timer Calculator"))
+            .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Calculate frequency and duty cycle for 555 astable mode"))
+            .child(
+                div().flex().flex_wrap().gap_4()
+                    .child(Self::calc_field("R1", "1", "kΩ", primary))
+                    .child(Self::calc_field("R2", "10", "kΩ", AMBER))
+                    .child(Self::calc_field("C", "10", "μF", GREEN)),
+            )
+            .child(
+                div().mt_2().p_4().rounded_lg().bg(hsla(0., 0., 0., 0.2))
+                    .flex().flex_col().items_center().gap_2()
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("f = 1.44 / ((R1 + 2×R2) × C)"))
+                    .child(div().text_xl().text_color(rgb(primary)).child("f = 6.86 Hz"))
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Duty Cycle = 52.4%")),
+            )
+            .into_any_element()
+    }
+
+    fn render_led_resistor(&self) -> AnyElement {
+        let primary = self.primary();
+        glass_card_div()
+            .p_6()
+            .flex()
+            .flex_col()
+            .gap_4()
+            .child(div().text_color(rgb(TEXT_PRIMARY)).child("💡 LED Current Limiting Resistor"))
+            .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Calculate the series resistor needed for an LED"))
+            .child(
+                div().flex().flex_wrap().gap_4()
+                    .child(Self::calc_field("Supply Voltage", "5", "V", primary))
+                    .child(Self::calc_field("LED Forward Voltage", "2.0", "V", RED))
+                    .child(Self::calc_field("LED Current", "20", "mA", AMBER)),
+            )
+            .child(
+                div().mt_2().p_4().rounded_lg().bg(hsla(0., 0., 0., 0.2))
+                    .flex().flex_col().items_center().gap_2()
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("R = (Vs - Vf) / I"))
+                    .child(div().text_xl().text_color(rgb(GREEN)).child("R = 150 Ω"))
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Power dissipation: 60 mW")),
+            )
+            .into_any_element()
+    }
+
+    fn render_battery_life(&self) -> AnyElement {
+        let primary = self.primary();
+        glass_card_div()
+            .p_6()
+            .flex()
+            .flex_col()
+            .gap_4()
+            .child(div().text_color(rgb(TEXT_PRIMARY)).child("🔋 Battery Life Calculator"))
+            .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Estimate battery runtime from capacity and current draw"))
+            .child(
+                div().flex().flex_wrap().gap_4()
+                    .child(Self::calc_field("Battery Capacity", "2000", "mAh", primary))
+                    .child(Self::calc_field("Average Current", "80", "mA", AMBER)),
+            )
+            .child(
+                div().mt_2().p_4().rounded_lg().bg(hsla(0., 0., 0., 0.2))
+                    .flex().flex_col().items_center().gap_2()
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Time = Capacity / Current"))
+                    .child(div().text_xl().text_color(rgb(GREEN)).child("≈ 25.0 hours"))
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("≈ 1.04 days")),
             )
             .into_any_element()
     }
