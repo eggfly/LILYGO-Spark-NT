@@ -233,7 +233,7 @@ impl SparkApp {
 }
 
 impl Render for SparkApp {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let content: AnyElement = match self.current_page {
             Page::Discovery => self.render_discovery().into_any_element(),
             Page::FirmwareCenter => self.render_firmware_center(cx).into_any_element(),
@@ -258,8 +258,10 @@ impl Render for SparkApp {
         // On Windows, add custom window control buttons at the top
         #[cfg(target_os = "windows")]
         {
-            root = root.child(self.render_windows_titlebar(cx));
+            root = root.child(self.render_windows_titlebar(window, cx));
         }
+        #[cfg(not(target_os = "windows"))]
+        let _ = window;
 
         root = root.child(
             div()
@@ -277,16 +279,66 @@ impl Render for SparkApp {
 
 #[cfg(target_os = "windows")]
 impl SparkApp {
-    fn render_windows_titlebar(&self, _cx: &mut Context<Self>) -> impl IntoElement {
+    fn windows_icon_font() -> &'static str {
+        use std::sync::OnceLock;
+        static FONT: OnceLock<&'static str> = OnceLock::new();
+        *FONT.get_or_init(|| {
+            use windows::Wdk::System::SystemServices::RtlGetVersion;
+            let mut version = unsafe { std::mem::zeroed() };
+            let status = unsafe { RtlGetVersion(&mut version) };
+            if status.is_ok() && version.dwBuildNumber >= 22000 {
+                "Segoe Fluent Icons"
+            } else {
+                "Segoe MDL2 Assets"
+            }
+        })
+    }
+
+    fn render_windows_titlebar(&self, window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        let is_maximized = window.is_maximized();
+        let button_height = px(36.0);
+        let icon_font = Self::windows_icon_font();
+
+        let caption_button = |id: &'static str, icon: &'static str, control_area: WindowControlArea, is_close: bool| {
+            let mut btn = div()
+                .id(id)
+                .w(px(36.0))
+                .h(button_height)
+                .flex()
+                .items_center()
+                .justify_center()
+                .cursor_pointer()
+                .occlude()
+                .window_control_area(control_area);
+
+            if is_close {
+                btn = btn.hover(|s| {
+                    s.bg(rgba(0xe81123ff))
+                        .text_color(rgb(0xffffff))
+                });
+            } else {
+                btn = btn.hover(|s| s.bg(hsla(0., 0., 0.5, 0.1)));
+            }
+
+            btn.child(
+                div()
+                    .font_family(icon_font)
+                    .text_size(px(10.0))
+                    .text_color(rgb(TEXT_SECONDARY))
+                    .child(icon),
+            )
+        };
+
+        let maximize_icon = if is_maximized { "\u{e923}" } else { "\u{e922}" };
+
         div()
             .id("windows-titlebar")
             .w_full()
-            .h(px(36.0))
+            .h(button_height)
             .flex()
             .items_center()
             .justify_between()
             .window_control_area(WindowControlArea::Drag)
-            // Title on left
             .child(
                 div()
                     .pl(px(12.0))
@@ -294,69 +346,14 @@ impl SparkApp {
                     .text_color(rgb(TEXT_MUTED))
                     .child("LILYGO Spark NT"),
             )
-            // Window control buttons on right
             .child(
                 div()
                     .flex()
                     .items_center()
                     .h_full()
-                    // Minimize
-                    .child(
-                        div()
-                            .id("win-minimize")
-                            .w(px(46.0))
-                            .h_full()
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .cursor_pointer()
-                            .hover(|s| s.bg(hsla(0., 0., 0.5, 0.1)))
-                            .window_control_area(WindowControlArea::Min)
-                            .child(
-                                div()
-                                    .text_xs()
-                                    .text_color(rgb(TEXT_MUTED))
-                                    .child("─"),
-                            ),
-                    )
-                    // Maximize
-                    .child(
-                        div()
-                            .id("win-maximize")
-                            .w(px(46.0))
-                            .h_full()
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .cursor_pointer()
-                            .hover(|s| s.bg(hsla(0., 0., 0.5, 0.1)))
-                            .window_control_area(WindowControlArea::Max)
-                            .child(
-                                div()
-                                    .text_xs()
-                                    .text_color(rgb(TEXT_MUTED))
-                                    .child("□"),
-                            ),
-                    )
-                    // Close
-                    .child(
-                        div()
-                            .id("win-close")
-                            .w(px(46.0))
-                            .h_full()
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .cursor_pointer()
-                            .hover(|s| s.bg(hsla(0., 0.7, 0.5, 0.8)))
-                            .window_control_area(WindowControlArea::Close)
-                            .child(
-                                div()
-                                    .text_xs()
-                                    .text_color(rgb(TEXT_MUTED))
-                                    .child("✕"),
-                            ),
-                    ),
+                    .child(caption_button("win-minimize", "\u{e921}", WindowControlArea::Min, false))
+                    .child(caption_button("win-maximize", maximize_icon, WindowControlArea::Max, false))
+                    .child(caption_button("win-close", "\u{e8bb}", WindowControlArea::Close, true)),
             )
     }
 }
