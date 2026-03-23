@@ -34,7 +34,7 @@ impl SparkApp {
                     .p_6()
                     .border_b_1()
                     .border_color(glass_border())
-                    .child(page_header("👥", self.i18n.t("community.title"), self.i18n.t("community.subtitle")))
+                    .child(page_header_with_primary("👥", self.i18n.t("community.title"), self.i18n.t("community.subtitle"), self.primary()))
             )
             // Link grid
             .child(

@@ -12,6 +12,7 @@ impl SparkApp {
     pub fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let t = &self.i18n;
         let active_tab = self.settings_tab;
+        let primary = self.primary();
 
         div()
             .flex_1()
@@ -34,6 +35,7 @@ impl SparkApp {
                         active_tab == SettingsTab::Settings,
                         cx,
                         SettingsTab::Settings,
+                        primary,
                     ))
                     .child(Self::settings_tab_btn(
                         "💬",
@@ -41,6 +43,7 @@ impl SparkApp {
                         active_tab == SettingsTab::Feedback,
                         cx,
                         SettingsTab::Feedback,
+                        primary,
                     )),
             )
             // Content
@@ -57,6 +60,7 @@ impl SparkApp {
         active: bool,
         cx: &mut Context<Self>,
         tab: SettingsTab,
+        primary: u32,
     ) -> Stateful<Div> {
         let mut btn = div()
             .id(SharedString::from(format!("settings-tab-{:?}", tab)))
@@ -72,7 +76,7 @@ impl SparkApp {
         if active {
             btn = btn
                 .bg(hsla(270. / 360., 0.5, 0.5, 0.15))
-                .text_color(rgb(PRIMARY));
+                .text_color(rgb(primary));
         } else {
             btn = btn
                 .text_color(rgb(TEXT_MUTED))
@@ -90,6 +94,7 @@ impl SparkApp {
 
     fn render_settings_content(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let t = &self.i18n;
+        let primary = self.primary();
 
         let mut content = div()
             .max_w(px(680.0))
@@ -112,7 +117,7 @@ impl SparkApp {
                     .cursor_pointer();
 
                 if is_current {
-                    btn = btn.bg(rgb(PRIMARY)).text_color(rgb(0xffffff));
+                    btn = btn.bg(rgb(self.primary())).text_color(rgb(0xffffff));
                 } else {
                     btn = btn
                         .bg(hsla(0., 0., 0., 0.2))
@@ -160,7 +165,7 @@ impl SparkApp {
                     .text_sm()
                     .cursor_pointer();
                 if is_sel {
-                    btn = btn.bg(rgb(PRIMARY)).text_color(rgb(0xffffff));
+                    btn = btn.bg(rgb(self.primary())).text_color(rgb(0xffffff));
                 } else {
                     btn = btn
                         .text_color(rgb(TEXT_MUTED))
@@ -202,7 +207,7 @@ impl SparkApp {
                     .text_sm()
                     .cursor_pointer();
                 if is_sel {
-                    btn = btn.bg(rgb(PRIMARY)).text_color(rgb(0xffffff));
+                    btn = btn.bg(rgb(self.primary())).text_color(rgb(0xffffff));
                 } else {
                     btn = btn.text_color(rgb(TEXT_MUTED)).hover(|s| s.text_color(rgb(TEXT_PRIMARY)));
                 }
@@ -274,7 +279,7 @@ impl SparkApp {
                     .text_sm()
                     .cursor_pointer();
                 if is_sel {
-                    btn = btn.bg(rgb(PRIMARY)).text_color(rgb(0xffffff));
+                    btn = btn.bg(rgb(self.primary())).text_color(rgb(0xffffff));
                 } else {
                     btn = btn.text_color(rgb(TEXT_MUTED)).hover(|s| s.text_color(rgb(TEXT_PRIMARY)));
                 }
@@ -299,7 +304,7 @@ impl SparkApp {
             let toggle = Self::toggle_switch("glass-toggle", enabled, cx, |this, cx| {
                 this.glass_enabled = !this.glass_enabled;
                 cx.notify();
-            });
+            }, primary);
             let label = if enabled {
                 t.t("settings.glass_on")
             } else {
@@ -326,7 +331,7 @@ impl SparkApp {
             let toggle = Self::toggle_switch("sound-toggle", enabled, cx, |this, cx| {
                 this.sound_enabled = !this.sound_enabled;
                 cx.notify();
-            });
+            }, primary);
             let label = if enabled {
                 t.t("settings.sound_on")
             } else {
@@ -367,7 +372,7 @@ impl SparkApp {
                     .text_xs()
                     .cursor_pointer();
                 if is_sel {
-                    btn = btn.bg(rgb(PRIMARY)).text_color(rgb(0xffffff));
+                    btn = btn.bg(rgb(self.primary())).text_color(rgb(0xffffff));
                 } else {
                     btn = btn
                         .text_color(rgb(TEXT_MUTED))
@@ -483,7 +488,7 @@ impl SparkApp {
                 .px_4()
                 .py(px(8.0))
                 .rounded_lg()
-                .bg(rgb(PRIMARY))
+                .bg(rgb(self.primary()))
                 .text_sm()
                 .text_color(rgb(0xffffff))
                 .cursor_pointer()
@@ -547,7 +552,7 @@ impl SparkApp {
                     .child(
                         div()
                             .text_xs()
-                            .text_color(rgb(PRIMARY))
+                            .text_color(rgb(self.primary()))
                             .child(chevron.to_string()),
                     )
                     .child(div().child("🔧"))
@@ -575,7 +580,7 @@ impl SparkApp {
                                 .flex()
                                 .items_center()
                                 .gap_2()
-                                .child(div().text_color(rgb(PRIMARY)).child("📄"))
+                                .child(div().text_color(rgb(self.primary())).child("📄"))
                                 .child(
                                     div()
                                         .text_sm()
@@ -604,7 +609,7 @@ impl SparkApp {
                                         .rounded_lg()
                                         .bg(hsla(270. / 360., 0.4, 0.5, 0.1))
                                         .text_sm()
-                                        .text_color(rgb(PRIMARY))
+                                        .text_color(rgb(self.primary()))
                                         .cursor_pointer()
                                         .hover(|s| s.bg(hsla(270. / 360., 0.4, 0.5, 0.2)))
                                         .child("📂")
@@ -620,7 +625,7 @@ impl SparkApp {
                         Self::toggle_switch("canary-toggle", enabled, cx, |this, cx| {
                             this.canary_update = !this.canary_update;
                             cx.notify();
-                        });
+                        }, primary);
                     advanced_items = advanced_items.child(
                         glass_card_div()
                             .p_4()
@@ -638,7 +643,7 @@ impl SparkApp {
                                             .flex()
                                             .items_center()
                                             .gap_2()
-                                            .child(div().text_color(rgb(PRIMARY)).child("⚡"))
+                                            .child(div().text_color(rgb(self.primary())).child("⚡"))
                                             .child(
                                                 div()
                                                     .text_sm()
@@ -664,7 +669,7 @@ impl SparkApp {
                         Self::toggle_switch("dev-mode-toggle", enabled, cx, |this, cx| {
                             this.developer_mode = !this.developer_mode;
                             cx.notify();
-                        });
+                        }, primary);
                     advanced_items = advanced_items.child(
                         glass_card_div()
                             .p_4()
@@ -682,7 +687,7 @@ impl SparkApp {
                                             .flex()
                                             .items_center()
                                             .gap_2()
-                                            .child(div().text_color(rgb(PRIMARY)).child("⚡"))
+                                            .child(div().text_color(rgb(self.primary())).child("⚡"))
                                             .child(
                                                 div()
                                                     .text_sm()
@@ -830,9 +835,10 @@ impl SparkApp {
         enabled: bool,
         cx: &mut Context<Self>,
         on_click: fn(&mut Self, &mut Context<Self>),
+        primary: u32,
     ) -> Stateful<Div> {
         let (track_bg, knob_offset) = if enabled {
-            (rgb(PRIMARY), px(18.0))
+            (rgb(primary), px(18.0))
         } else {
             (rgb(TEXT_MUTED), px(2.0))
         };

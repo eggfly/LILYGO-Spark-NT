@@ -81,7 +81,7 @@ impl SparkApp {
             .p_6()
             .gap_6()
             .overflow_y_scroll()
-            .child(page_header("📄", self.i18n.t("tools.title"), self.i18n.t("tools.subtitle")))
+            .child(page_header_with_primary("📄", self.i18n.t("tools.title"), self.i18n.t("tools.subtitle"), self.primary()))
             .child(tool_grid)
             .child(tool_content)
     }

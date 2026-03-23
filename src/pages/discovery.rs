@@ -42,7 +42,7 @@ impl SparkApp {
                                             .rounded_xl()
                                             .bg(linear_gradient(
                                                 135.,
-                                                linear_color_stop(rgb(PRIMARY), 0.),
+                                                linear_color_stop(rgb(self.primary()), 0.),
                                                 linear_color_stop(rgb(0x7c3aed), 1.),
                                             ))
                                             .shadow(vec![BoxShadow {

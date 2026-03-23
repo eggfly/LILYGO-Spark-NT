@@ -163,7 +163,7 @@ impl SparkApp {
                             .px_4()
                             .py(px(6.0))
                             .rounded_lg()
-                            .bg(rgb(PRIMARY))
+                            .bg(rgb(self.primary()))
                             .text_sm()
                             .text_color(rgb(0xffffff))
                             .cursor_pointer()

@@ -196,7 +196,7 @@ impl SparkApp {
                             div()
                                 .text_sm()
                                 .text_color(rgb(TEXT_PRIMARY))
-                                .when(is_selected, |d: Div| d.text_color(rgb(PRIMARY)))
+                                .when(is_selected, |d: Div| d.text_color(rgb(self.primary())))
                                 .child(name),
                         )
                         .child(
@@ -212,7 +212,7 @@ impl SparkApp {
                                             .py(px(1.0))
                                             .rounded_sm()
                                             .bg(hsla(270. / 360., 0.3, 0.3, 0.2))
-                                            .text_color(rgb(PRIMARY))
+                                            .text_color(rgb(self.primary()))
                                             .child(mcu_for_badge),
                                     )
                                 }),
@@ -279,7 +279,7 @@ impl SparkApp {
                                             .w(px(14.0))
                                             .h(px(14.0))
                                             .rounded_sm()
-                                            .bg(rgb(PRIMARY))
+                                            .bg(rgb(self.primary()))
                                             .flex()
                                             .items_center()
                                             .justify_center()
@@ -389,7 +389,7 @@ impl SparkApp {
                                             .py(px(2.0))
                                             .rounded_full()
                                             .bg(hsla(270. / 360., 0.3, 0.3, 0.2))
-                                            .text_color(rgb(PRIMARY))
+                                            .text_color(rgb(self.primary()))
                                             .child(format!("{}", firmware_count)),
                                     ),
                             ),

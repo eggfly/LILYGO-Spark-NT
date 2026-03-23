@@ -48,7 +48,7 @@ pub fn glass_card_div() -> Div {
         .shadow(vec![card_shadow()])
 }
 
-pub fn page_header(icon: &str, title: &str, subtitle: &str) -> Div {
+pub fn page_header_with_primary(icon: &str, title: &str, subtitle: &str, primary: u32) -> Div {
     div()
         .flex()
         .flex_col()
@@ -71,7 +71,7 @@ pub fn page_header(icon: &str, title: &str, subtitle: &str) -> Div {
                         .rounded_xl()
                         .bg(linear_gradient(
                             135.,
-                            linear_color_stop(rgb(PRIMARY), 0.),
+                            linear_color_stop(rgb(primary), 0.),
                             linear_color_stop(rgb(0x7c3aed), 1.),
                         ))
                         .shadow(vec![BoxShadow {

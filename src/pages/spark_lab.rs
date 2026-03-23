@@ -58,7 +58,7 @@ impl SparkApp {
                             .py_2()
                             .rounded_lg()
                             .bg(hsla(270. / 360., 0.5, 0.5, 0.15))
-                            .text_color(rgb(PRIMARY))
+                            .text_color(rgb(self.primary()))
                             .text_sm()
                             .cursor_pointer()
                             .child(format!("✨ {}", self.i18n.t("sparklab.sparkling_list"))),
@@ -87,7 +87,7 @@ impl SparkApp {
             .gap_6()
             .id("spark-lab-page")
             .overflow_y_scroll()
-            .child(page_header("🧪", self.i18n.t("sparklab.title"), self.i18n.t("sparklab.subtitle")))
+            .child(page_header_with_primary("🧪", self.i18n.t("sparklab.title"), self.i18n.t("sparklab.subtitle"), self.primary()))
             // Stats row
             .child(
                 div()
