@@ -1,4 +1,5 @@
 use gpui::*;
+use gpui::prelude::FluentBuilder;
 
 use crate::app::SparkApp;
 use crate::theme::*;
@@ -7,15 +8,16 @@ struct ProductInfo {
     name: &'static str,
     mcu: &'static str,
     description: &'static str,
+    firmware_count: usize,
 }
 
 const PRODUCTS: &[ProductInfo] = &[
-    ProductInfo { name: "T-Display S3", mcu: "ESP32-S3", description: "1.9\" LCD, USB-C, Wi-Fi/BLE" },
-    ProductInfo { name: "T-Display S3 AMOLED", mcu: "ESP32-S3", description: "1.91\" AMOLED, Touch, USB-C" },
-    ProductInfo { name: "T-Deck", mcu: "ESP32-S3", description: "Keyboard, 2.8\" LCD, LoRa" },
-    ProductInfo { name: "T-Watch S3", mcu: "ESP32-S3", description: "Wearable, Touch, IMU" },
-    ProductInfo { name: "T-Beam Supreme", mcu: "ESP32-S3", description: "GPS, LoRa, Solar" },
-    ProductInfo { name: "T-ETH-Lite", mcu: "ESP32-S3", description: "Ethernet, PoE, Wi-Fi" },
+    ProductInfo { name: "T-Display S3", mcu: "ESP32-S3", description: "1.9\" LCD, USB-C, Wi-Fi/BLE", firmware_count: 9 },
+    ProductInfo { name: "T-Display S3 AMOLED", mcu: "ESP32-S3", description: "1.91\" AMOLED, Touch, USB-C", firmware_count: 7 },
+    ProductInfo { name: "T-Deck", mcu: "ESP32-S3", description: "Keyboard, 2.8\" LCD, LoRa", firmware_count: 5 },
+    ProductInfo { name: "T-Watch S3", mcu: "ESP32-S3", description: "Wearable, Touch, IMU", firmware_count: 3 },
+    ProductInfo { name: "T-Beam Supreme", mcu: "ESP32-S3", description: "GPS, LoRa, Solar", firmware_count: 4 },
+    ProductInfo { name: "T-ETH-Lite", mcu: "ESP32-S3", description: "Ethernet, PoE, Wi-Fi", firmware_count: 2 },
 ];
 
 struct FirmwareInfo {
@@ -23,13 +25,14 @@ struct FirmwareInfo {
     version: &'static str,
     fw_type: &'static str,
     size: &'static str,
+    description: &'static str,
 }
 
 const FIRMWARES: &[FirmwareInfo] = &[
-    FirmwareInfo { name: "Factory Test", version: "v1.0.0", fw_type: "factory", size: "1.2 MB" },
-    FirmwareInfo { name: "LVGL Demo", version: "v9.2.0", fw_type: "lvgl", size: "2.8 MB" },
-    FirmwareInfo { name: "MicroPython", version: "v1.23.0", fw_type: "micropython", size: "1.5 MB" },
-    FirmwareInfo { name: "Arduino Blink", version: "v1.0.0", fw_type: "bin", size: "256 KB" },
+    FirmwareInfo { name: "Factory Test", version: "v1.0.0", fw_type: "factory", size: "1.2 MB", description: "Official factory test firmware" },
+    FirmwareInfo { name: "LVGL Demo", version: "v9.2.0", fw_type: "lvgl", size: "2.8 MB", description: "LVGL graphics demo" },
+    FirmwareInfo { name: "MicroPython", version: "v1.23.0", fw_type: "micropython", size: "1.5 MB", description: "MicroPython runtime" },
+    FirmwareInfo { name: "Arduino Blink", version: "v1.0.0", fw_type: "bin", size: "256 KB", description: "Simple LED blink example" },
 ];
 
 impl SparkApp {
@@ -48,24 +51,61 @@ impl SparkApp {
                     .flex_col()
                     .border_r_1()
                     .border_color(glass_border())
+                    .bg(hsla(220. / 360., 0.1, 0.08, 0.5))
                     .child(
-                        // Search bar
+                        // Search bar area
                         div()
-                            .p_3()
+                            .p(px(16.0))
                             .border_b_1()
                             .border_color(glass_border())
+                            .flex()
+                            .flex_col()
+                            .gap_3()
+                            // Search input
                             .child(
                                 div()
                                     .flex()
                                     .items_center()
                                     .px_3()
-                                    .py_2()
+                                    .py(px(8.0))
                                     .rounded_lg()
                                     .bg(hsla(0., 0., 0., 0.2))
                                     .border_1()
                                     .border_color(glass_border())
                                     .child(
                                         div().text_sm().text_color(rgb(TEXT_MUTED)).child("🔍 Search products..."),
+                                    ),
+                            )
+                            // Filter checkbox
+                            .child(
+                                div()
+                                    .flex()
+                                    .items_center()
+                                    .gap_2()
+                                    .child(
+                                        div()
+                                            .w(px(14.0))
+                                            .h(px(14.0))
+                                            .rounded_sm()
+                                            .bg(rgb(PRIMARY))
+                                            .flex()
+                                            .items_center()
+                                            .justify_center()
+                                            .child(
+                                                div().text_xs().text_color(rgb(0xffffff)).child("✓"),
+                                            ),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .text_color(rgb(TEXT_SECONDARY))
+                                            .child("Only show with firmware"),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .text_color(rgb(TEXT_MUTED))
+                                            .child(format!("({} products)", PRODUCTS.len())),
                                     ),
                             ),
                     )
@@ -108,10 +148,12 @@ impl SparkApp {
                                         .w(px(48.0))
                                         .h(px(48.0))
                                         .rounded_lg()
-                                        .bg(hsla(220. / 360., 0.1, 0.2, 0.5))
+                                        .bg(rgb(0xffffff))
                                         .flex()
                                         .items_center()
                                         .justify_center()
+                                        .flex_none()
+                                        .shadow_sm()
                                         .child(
                                             div().text_color(rgb(TEXT_MUTED)).child("📱"),
                                         ),
@@ -124,11 +166,16 @@ impl SparkApp {
                                         .flex_col()
                                         .gap(px(2.0))
                                         .child(
-                                            div().text_sm().text_color(rgb(TEXT_PRIMARY)).child(product.name.to_string()),
+                                            div()
+                                                .text_sm()
+                                                .text_color(rgb(TEXT_PRIMARY))
+                                                .when(is_selected, |d: Div| d.text_color(rgb(PRIMARY)))
+                                                .child(product.name.to_string()),
                                         )
                                         .child(
                                             div()
                                                 .flex()
+                                                .items_center()
                                                 .gap_2()
                                                 .child(
                                                     div()
@@ -157,45 +204,86 @@ impl SparkApp {
                     .flex_1()
                     .flex()
                     .flex_col()
-                    .p_6()
-                    .gap_4()
                     .overflow_y_scroll()
+                    // Product header with gradient bg
                     .child(
-                        // Product header
                         div()
-                            .flex()
-                            .items_center()
-                            .justify_between()
+                            .p_6()
+                            .border_b_1()
+                            .border_color(glass_border())
                             .child(
                                 div()
-                                    .flex()
-                                    .flex_col()
-                                    .gap_1()
-                                    .child(
-                                        div().text_2xl().text_color(rgb(TEXT_PRIMARY)).child("T-Display S3"),
-                                    )
-                                    .child(
-                                        div().text_sm().text_color(rgb(TEXT_MUTED)).child("1.9\" LCD, USB-C, Wi-Fi/BLE"),
-                                    ),
-                            )
-                            .child(
-                                div()
-                                    .w(px(80.0))
-                                    .h(px(80.0))
-                                    .rounded_xl()
-                                    .bg(hsla(220. / 360., 0.1, 0.2, 0.5))
                                     .flex()
                                     .items_center()
-                                    .justify_center()
+                                    .justify_between()
                                     .child(
-                                        div().text_2xl().child("📱"),
+                                        div()
+                                            .flex()
+                                            .flex_col()
+                                            .gap_2()
+                                            .child(
+                                                div().text_2xl().text_color(rgb(TEXT_PRIMARY)).child("T-Display S3"),
+                                            )
+                                            .child(
+                                                div().text_sm().text_color(rgb(TEXT_MUTED)).child("1.9\" LCD, USB-C, Wi-Fi/BLE"),
+                                            )
+                                            // Action buttons row
+                                            .child(
+                                                div()
+                                                    .flex()
+                                                    .gap_2()
+                                                    .mt_2()
+                                                    .child(Self::header_action_btn("🐙", "GitHub"))
+                                                    .child(Self::header_action_btn("🌐", "Product Page"))
+                                                    .child(Self::header_action_btn("📊", "Electronics")),
+                                            ),
+                                    )
+                                    .child(
+                                        div()
+                                            .w(px(80.0))
+                                            .h(px(80.0))
+                                            .rounded_xl()
+                                            .bg(rgb(0xffffff))
+                                            .flex()
+                                            .items_center()
+                                            .justify_center()
+                                            .shadow_md()
+                                            .child(
+                                                div().text_2xl().child("📱"),
+                                            ),
                                     ),
                             ),
                     )
+                    // Available Firmware section title
                     .child(
-                        // Firmware items
+                        div()
+                            .px_6()
+                            .pt_4()
+                            .pb_2()
+                            .child(
+                                div()
+                                    .flex()
+                                    .items_center()
+                                    .gap_2()
+                                    .child(
+                                        div().text_sm().text_color(rgb(TEXT_PRIMARY)).child("Available Firmware"),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .px(px(6.0))
+                                            .py(px(2.0))
+                                            .rounded_full()
+                                            .bg(hsla(270. / 360., 0.3, 0.3, 0.2))
+                                            .text_color(rgb(PRIMARY))
+                                            .child(format!("{}", FIRMWARES.len())),
+                                    ),
+                            ),
+                    )
+                    // Firmware items
+                    .child(
                         {
-                            let mut items = div().flex().flex_col().gap_3();
+                            let mut items = div().px_6().pb_6().flex().flex_col().gap_3();
                             for fw in FIRMWARES {
                                 let (badge_color, badge_bg) = match fw.fw_type {
                                     "factory" => (GREEN, hsla(150. / 360., 0.6, 0.4, 0.15)),
@@ -255,5 +343,24 @@ impl SparkApp {
                         },
                     ),
             )
+    }
+
+    fn header_action_btn(icon: &str, label: &str) -> Div {
+        div()
+            .flex()
+            .items_center()
+            .gap_1()
+            .px_2()
+            .py(px(4.0))
+            .rounded_lg()
+            .bg(hsla(0., 0., 0., 0.15))
+            .border_1()
+            .border_color(glass_border())
+            .text_xs()
+            .text_color(rgb(TEXT_SECONDARY))
+            .cursor_pointer()
+            .hover(|s| s.bg(hsla(0., 0., 0., 0.25)).text_color(rgb(TEXT_PRIMARY)))
+            .child(icon.to_string())
+            .child(label.to_string())
     }
 }
