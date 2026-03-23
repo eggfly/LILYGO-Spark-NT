@@ -152,19 +152,53 @@ impl SparkApp {
             },
         );
 
-        // Footer - version
+        // Footer - login button + version (matching Electron)
         sidebar = sidebar.child(
             div()
                 .p_3()
                 .border_t_1()
                 .border_color(glass_border())
                 .flex()
-                .justify_center()
+                .flex_col()
+                .gap(px(10.0))
+                // GitHub login button placeholder
                 .child(
                     div()
-                        .text_xs()
-                        .text_color(rgb(TEXT_MUTED))
-                        .child("v0.1.0"),
+                        .id("github-login-btn")
+                        .w_full()
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .gap_2()
+                        .px_3()
+                        .py(px(10.0))
+                        .rounded_xl()
+                        .bg(hsla(0., 0., 0.3, 0.2))
+                        .border_1()
+                        .border_color(glass_border())
+                        .cursor_pointer()
+                        .hover(|s| s.bg(hsla(0., 0., 0.3, 0.3)))
+                        .child(
+                            div().text_sm().child("🐙"),
+                        )
+                        .child(
+                            div()
+                                .text_sm()
+                                .text_color(rgb(TEXT_SECONDARY))
+                                .child("Login with GitHub"),
+                        ),
+                )
+                // Version
+                .child(
+                    div()
+                        .flex()
+                        .justify_center()
+                        .child(
+                            div()
+                                .text_xs()
+                                .text_color(rgb(TEXT_MUTED))
+                                .child("v0.1.0"),
+                        ),
                 ),
         );
 
