@@ -166,8 +166,22 @@ pub struct SparkApp {
     pub active_lab_tab: usize, // 0=Burner, 1=Dumper, 2=Analyzer, 3=Partition
     // Embedded Tools state
     pub active_tool_idx: usize, // 0-11 tool index
+    // Discovery state
+    pub news_items: Vec<NewsItem>,
+    pub news_loading: bool,
+    pub news_error: Option<String>,
     // Animation
     pub page_transition_id: usize,
+}
+
+#[derive(Clone)]
+pub struct NewsItem {
+    pub title: String,
+    pub summary: String,
+    pub source: String,
+    pub url: String,
+    pub date: String,
+    pub tags: Vec<String>,
 }
 
 /// Persisted settings that survive app restart
@@ -265,6 +279,9 @@ impl SparkApp {
             canary_update: false,
             active_lab_tab: 0,
             active_tool_idx: 0,
+            news_items: Vec::new(),
+            news_loading: false,
+            news_error: None,
             page_transition_id: 0,
         }
     }
@@ -273,6 +290,53 @@ impl SparkApp {
         self.current_page = page;
         self.page_transition_id += 1;
         cx.notify();
+    }
+
+    pub fn load_news(&mut self, cx: &mut Context<Self>) {
+        self.news_loading = true;
+        self.news_error = None;
+        cx.notify();
+
+        cx.spawn(async |this: WeakEntity<Self>, cx: &mut AsyncApp| {
+            let feeds = [
+                ("Hackaday", "https://hackaday.com/category/esp32/feed/"),
+                ("CNX Software", "https://www.cnx-software.com/feed/"),
+                ("Adafruit", "https://blog.adafruit.com/feed/"),
+            ];
+
+            let client = reqwest::Client::builder()
+                .timeout(Duration::from_secs(10))
+                .build()
+                .unwrap();
+
+            let mut all_items: Vec<NewsItem> = Vec::new();
+            for (source, url) in &feeds {
+                match client.get(*url).send().await {
+                    Ok(resp) => {
+                        if let Ok(text) = resp.text().await {
+                            let items = parse_rss_items(&text, source);
+                            all_items.extend(items.into_iter().take(5));
+                        }
+                    }
+                    Err(e) => {
+                        log::warn!("Failed to fetch {}: {}", source, e);
+                    }
+                }
+            }
+
+            all_items.sort_by(|a, b| b.date.cmp(&a.date));
+
+            let _ = this.update(cx, |this, cx| {
+                this.news_loading = false;
+                if all_items.is_empty() {
+                    this.news_error = Some("No news found".to_string());
+                } else {
+                    log::info!("Loaded {} news items", all_items.len());
+                    this.news_items = all_items;
+                }
+                cx.notify();
+            });
+        }).detach();
     }
 
     pub fn load_manifest(&mut self, cx: &mut Context<Self>) {
@@ -367,7 +431,7 @@ impl SparkApp {
 impl Render for SparkApp {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let page_content = match self.current_page {
-            Page::Discovery => self.render_discovery().into_any_element(),
+            Page::Discovery => self.render_discovery(cx).into_any_element(),
             Page::FirmwareCenter => self.render_firmware_center(cx).into_any_element(),
             Page::FirmwareLab => self.render_firmware_lab(cx).into_any_element(),
             Page::SerialTools => self.render_serial_tools().into_any_element(),
@@ -499,5 +563,118 @@ impl SparkApp {
                     .child(caption_button("win-maximize", maximize_icon, WindowControlArea::Max, false))
                     .child(caption_button("win-close", "\u{e8bb}", WindowControlArea::Close, true)),
             )
+    }
+}
+
+/// Simple RSS XML parser - extracts items from RSS 2.0 feed XML
+fn parse_rss_items(xml: &str, source: &str) -> Vec<NewsItem> {
+    let mut items = Vec::new();
+    // Simple tag-based parsing (no XML crate needed)
+    for item_block in xml.split("<item>").skip(1) {
+        let end = item_block.find("</item>").unwrap_or(item_block.len());
+        let block = &item_block[..end];
+
+        let title = extract_tag(block, "title").unwrap_or_default();
+        let link = extract_tag(block, "link").unwrap_or_default();
+        let desc = extract_tag(block, "description").unwrap_or_default();
+        let pub_date = extract_tag(block, "pubDate").unwrap_or_default();
+
+        // Extract categories as tags
+        let mut tags = Vec::new();
+        for cat_block in block.split("<category").skip(1) {
+            if let Some(end) = cat_block.find("</category>") {
+                let cat = &cat_block[..end];
+                if let Some(start) = cat.find('>') {
+                    let tag = &cat[start + 1..];
+                    if !tag.is_empty() && tags.len() < 2 {
+                        tags.push(tag.to_string());
+                    }
+                }
+            }
+        }
+
+        // Clean HTML from description
+        let summary = strip_html(&desc);
+        let summary = if summary.len() > 150 {
+            format!("{}...", &summary[..summary.char_indices().nth(150).map(|(i, _)| i).unwrap_or(summary.len())])
+        } else {
+            summary
+        };
+
+        // Parse date to short format
+        let date = parse_rss_date(&pub_date);
+
+        if !title.is_empty() {
+            items.push(NewsItem {
+                title: decode_html_entities(&title),
+                summary,
+                source: source.to_string(),
+                url: link,
+                date,
+                tags,
+            });
+        }
+    }
+    items
+}
+
+fn extract_tag(xml: &str, tag: &str) -> Option<String> {
+    let open = format!("<{}", tag);
+    let close = format!("</{}>", tag);
+    // Handle CDATA sections
+    if let Some(start_pos) = xml.find(&open) {
+        let after_open = &xml[start_pos..];
+        if let Some(gt) = after_open.find('>') {
+            let content_start = start_pos + gt + 1;
+            if let Some(end_pos) = xml[content_start..].find(&close) {
+                let content = &xml[content_start..content_start + end_pos];
+                // Strip CDATA wrapper
+                let content = content
+                    .trim()
+                    .strip_prefix("<![CDATA[")
+                    .and_then(|s| s.strip_suffix("]]>"))
+                    .unwrap_or(content);
+                return Some(content.to_string());
+            }
+        }
+    }
+    None
+}
+
+fn strip_html(html: &str) -> String {
+    let mut result = String::new();
+    let mut in_tag = false;
+    for ch in html.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => result.push(ch),
+            _ => {}
+        }
+    }
+    decode_html_entities(&result).trim().to_string()
+}
+
+fn decode_html_entities(s: &str) -> String {
+    s.replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#039;", "'")
+        .replace("&apos;", "'")
+        .replace("&#8217;", "\u{2019}")
+        .replace("&#8216;", "\u{2018}")
+        .replace("&#8220;", "\u{201C}")
+        .replace("&#8221;", "\u{201D}")
+        .replace("&#8230;", "\u{2026}")
+}
+
+fn parse_rss_date(date_str: &str) -> String {
+    // RFC 2822 format: "Mon, 20 Mar 2025 12:00:00 +0000"
+    let parts: Vec<&str> = date_str.split_whitespace().collect();
+    if parts.len() >= 4 {
+        format!("{} {} {}", parts[1], parts[2], parts[3])
+    } else {
+        date_str.to_string()
     }
 }

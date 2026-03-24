@@ -144,7 +144,7 @@ impl SparkApp {
                             .child("👁 Preview"),
                     ),
             )
-            // Controls row
+            // Controls row - 4 columns matching Electron
             .child(
                 div()
                     .flex()
@@ -154,7 +154,7 @@ impl SparkApp {
                     .child(Self::control_select("Chip", "Auto Detect", "💾"))
                     .child(Self::control_select("Baud", "921600", "📡")),
             )
-            // File area
+            // File drop zone
             .child(
                 glass_card_div()
                     .p_6()
@@ -166,17 +166,66 @@ impl SparkApp {
                     .min_h(px(120.0))
                     .border_2()
                     .border_color(glass_border())
+                    .cursor_pointer()
+                    .hover(|s| s.border_color(glass_border_hover()))
                     .child(div().text_2xl().child("📂"))
                     .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child(t_drop_file.to_string()))
-                    .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("Supports: .bin firmware files")),
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap_2()
+                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("Supports: .bin firmware files"))
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .px(px(6.0))
+                                    .py(px(2.0))
+                                    .rounded_sm()
+                                    .bg(hsla(0., 0., 0., 0.2))
+                                    .text_color(rgb(TEXT_MUTED))
+                                    .child("or paste URL"),
+                            ),
+                    ),
             )
-            // Flash button
+            // Status bar + Flash button
             .child(
                 div()
                     .flex()
                     .items_center()
                     .gap_4()
-                    .child(div().flex_1().text_sm().text_color(rgb(TEXT_MUTED)).child(t_ready.to_string()))
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap_2()
+                            .child(
+                                div()
+                                    .w(px(8.0))
+                                    .h(px(8.0))
+                                    .rounded_full()
+                                    .bg(rgb(0xfbbf24)), // amber dot = idle
+                            )
+                            .child(
+                                div().text_sm().text_color(rgb(TEXT_MUTED)).child(t_ready.to_string()),
+                            ),
+                    )
+                    .child(div().flex_1())
+                    // Progress bar placeholder
+                    .child(
+                        div()
+                            .w(px(200.0))
+                            .h(px(4.0))
+                            .rounded_full()
+                            .bg(hsla(0., 0., 0., 0.15))
+                            .child(
+                                div()
+                                    .w(px(0.0))
+                                    .h_full()
+                                    .rounded_full()
+                                    .bg(rgb(primary)),
+                            ),
+                    )
                     .child(
                         div()
                             .px_6()
@@ -189,96 +238,246 @@ impl SparkApp {
                             .child(format!("⚡ {}", t_start_flash)),
                     ),
             )
-            // Terminal placeholder
+            // Terminal
             .child(
                 div()
                     .flex_1()
                     .min_h(px(200.0))
                     .rounded_lg()
-                    .bg(rgb(0x0f172a))
-                    .p_4()
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(rgb(0x64748b))
-                            .child("$ Terminal output will appear here..."),
-                    ),
-            )
-            .into_any_element()
-    }
-
-    fn render_dumper_tab(&self) -> AnyElement {
-        div()
-            .id("dumper-content")
-            .flex_1()
-            .flex()
-            .flex_col()
-            .p_6()
-            .gap_4()
-            .overflow_y_scroll()
-            // Controls
-            .child(
-                div()
-                    .flex()
-                    .gap_3()
-                    .child(Self::control_select("Port", "Select port...", "🔌"))
-                    .child(Self::control_select("Baud", "921600", "📡")),
-            )
-            // Device info card
-            .child(
-                glass_card_div()
-                    .p_6()
+                    .bg(rgb(0x0a0a0f))
+                    .border_1()
+                    .border_color(hsla(0., 0., 0.2, 0.5))
                     .flex()
                     .flex_col()
-                    .gap_3()
-                    .child(div().text_color(rgb(TEXT_PRIMARY)).child("Device Information"))
+                    // Terminal header bar
                     .child(
                         div()
                             .flex()
-                            .flex_wrap()
-                            .gap_3()
-                            .child(Self::info_chip("Chip", "—"))
-                            .child(Self::info_chip("Flash ID", "—"))
-                            .child(Self::info_chip("MAC", "—"))
-                            .child(Self::info_chip("Crystal", "—")),
-                    ),
-            )
-            // Dump settings
-            .child(
-                glass_card_div()
-                    .p_6()
-                    .flex()
-                    .flex_col()
-                    .gap_3()
-                    .child(div().text_color(rgb(TEXT_PRIMARY)).child("Dump Settings"))
-                    .child(
-                        div()
-                            .flex()
-                            .gap_3()
-                            .child(Self::control_select("Start Address", "0x0", "📍"))
-                            .child(Self::control_select("Size", "4 MB", "📏")),
-                    )
-                    .child(
-                        div()
-                            .flex()
-                            .justify_end()
+                            .items_center()
+                            .justify_between()
+                            .px_3()
+                            .py(px(6.0))
+                            .border_b_1()
+                            .border_color(hsla(0., 0., 0.15, 0.5))
                             .child(
                                 div()
-                                    .px_6()
-                                    .py(px(10.0))
-                                    .rounded_lg()
-                                    .bg(rgb(GREEN))
-                                    .text_color(rgb(0xffffff))
-                                    .cursor_pointer()
-                                    .hover(|s| s.opacity(0.85))
-                                    .child("⬇ Start Dump"),
+                                    .flex()
+                                    .items_center()
+                                    .gap_2()
+                                    .child(div().text_xs().text_color(rgb(0x22c55e)).child("●"))
+                                    .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("CONSOLE Output")),
+                            )
+                            .child(
+                                div()
+                                    .flex()
+                                    .gap_2()
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .text_color(rgb(TEXT_MUTED))
+                                            .cursor_pointer()
+                                            .hover(|s| s.text_color(rgb(TEXT_PRIMARY)))
+                                            .child("Auto-scroll"),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .text_color(rgb(TEXT_MUTED))
+                                            .cursor_pointer()
+                                            .hover(|s| s.text_color(rgb(TEXT_PRIMARY)))
+                                            .child("Clear"),
+                                    ),
+                            ),
+                    )
+                    // Terminal content
+                    .child(
+                        div()
+                            .flex_1()
+                            .p_3()
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .text_color(rgb(0x64748b))
+                                    .flex()
+                                    .flex_col()
+                                    .gap(px(2.0))
+                                    .child("$ Waiting for connection...")
+                                    .child("  Select a port and firmware file to begin flashing."),
                             ),
                     ),
             )
             .into_any_element()
     }
 
+    fn render_dumper_tab(&self) -> AnyElement {
+        let primary = self.primary();
+        div()
+            .id("dumper-content")
+            .flex_1()
+            .flex()
+            .flex_col()
+            .overflow_hidden()
+            .child(
+                // Two-panel layout (matching Electron)
+                div()
+                    .id("dumper-panels")
+                    .flex_1()
+                    .flex()
+                    .flex_row()
+                    .p_6()
+                    .gap_4()
+                    .overflow_y_scroll()
+                    // Left panel: Device Info
+                    .child(
+                        div()
+                            .w(px(380.0))
+                            .flex()
+                            .flex_col()
+                            .gap_4()
+                            // Device Info card
+                            .child(
+                                glass_card_div()
+                                    .p_5()
+                                    .flex()
+                                    .flex_col()
+                                    .gap_4()
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .items_center()
+                                            .justify_between()
+                                            .child(
+                                                div()
+                                                    .flex()
+                                                    .items_center()
+                                                    .gap_2()
+                                                    .child(div().text_color(rgb(TEXT_PRIMARY)).child("Device Info"))
+                                                    .child(
+                                                        div()
+                                                            .w(px(8.0))
+                                                            .h(px(8.0))
+                                                            .rounded_full()
+                                                            .bg(rgb(0xef4444)), // red = disconnected
+                                                    ),
+                                            )
+                                            .child(
+                                                div()
+                                                    .px_3()
+                                                    .py(px(6.0))
+                                                    .rounded_lg()
+                                                    .bg(rgb(primary))
+                                                    .text_xs()
+                                                    .text_color(rgb(0xffffff))
+                                                    .cursor_pointer()
+                                                    .hover(|s| s.opacity(0.85))
+                                                    .child("🔍 Detect Info"),
+                                            ),
+                                    )
+                                    // Port selection
+                                    .child(Self::control_select("Port", "Select port...", "🔌"))
+                                    // Info grid
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .flex_col()
+                                            .gap_2()
+                                            .child(Self::info_row("Detected Chip", "—"))
+                                            .child(Self::info_row("Flash ID", "—"))
+                                            .child(Self::info_row("Size", "—"))
+                                            .child(Self::info_row("MAC Address", "—"))
+                                            .child(Self::info_row("Crystal", "—")),
+                                    ),
+                            ),
+                    )
+                    // Right panel: Parameters
+                    .child(
+                        div()
+                            .flex_1()
+                            .flex()
+                            .flex_col()
+                            .gap_4()
+                            // Parameters card
+                            .child(
+                                glass_card_div()
+                                    .p_5()
+                                    .flex()
+                                    .flex_col()
+                                    .gap_4()
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .items_center()
+                                            .gap_2()
+                                            .child(div().child("⚙"))
+                                            .child(div().text_color(rgb(TEXT_PRIMARY)).child("Parameters")),
+                                    )
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .gap_3()
+                                            .child(Self::control_select("Start Address", "0x000000", "📍"))
+                                            .child(Self::control_select("Size", "4 MB", "📏")),
+                                    )
+                                    .child(Self::control_select("Baud Rate", "460800 (Fast)", "📡"))
+                                    // Dump button
+                                    .child(
+                                        div()
+                                            .w_full()
+                                            .px_6()
+                                            .py(px(12.0))
+                                            .rounded_lg()
+                                            .bg(rgb(GREEN))
+                                            .text_color(rgb(0xffffff))
+                                            .cursor_pointer()
+                                            .text_center()
+                                            .hover(|s| s.opacity(0.85))
+                                            .child("⬇ Dump Firmware"),
+                                    ),
+                            )
+                            // Progress card (initially empty)
+                            .child(
+                                glass_card_div()
+                                    .p_5()
+                                    .flex()
+                                    .flex_col()
+                                    .gap_3()
+                                    .child(
+                                        div()
+                                            .text_sm()
+                                            .text_color(rgb(TEXT_MUTED))
+                                            .child("Progress"),
+                                    )
+                                    .child(
+                                        div()
+                                            .w_full()
+                                            .h(px(6.0))
+                                            .rounded_full()
+                                            .bg(hsla(0., 0., 0., 0.15))
+                                            .child(
+                                                div()
+                                                    .w(px(0.0))
+                                                    .h_full()
+                                                    .rounded_full()
+                                                    .bg(rgb(primary)),
+                                            ),
+                                    )
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .justify_between()
+                                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("0%"))
+                                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("— kbit/s")),
+                                    ),
+                            ),
+                    ),
+            )
+            // Console at bottom
+            .child(self.render_console("Waiting for dump command..."))
+            .into_any_element()
+    }
+
     fn render_analyzer_tab(&self) -> AnyElement {
+        let primary = self.primary();
         div()
             .id("analyzer-content")
             .flex_1()
@@ -287,6 +486,24 @@ impl SparkApp {
             .p_6()
             .gap_4()
             .overflow_y_scroll()
+            // Engine selector + file drop
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap_3()
+                    .child(Self::control_select("Analysis Engine", "JavaScript (Built-in)", "🔬"))
+                    .child(
+                        div()
+                            .px(px(8.0))
+                            .py(px(4.0))
+                            .rounded_md()
+                            .bg(hsla(142. / 360., 0.6, 0.3, 0.3))
+                            .text_xs()
+                            .text_color(rgb(0x22c55e))
+                            .child("No deps required"),
+                    ),
+            )
             // Drop zone
             .child(
                 glass_card_div()
@@ -296,33 +513,121 @@ impl SparkApp {
                     .items_center()
                     .justify_center()
                     .gap_3()
-                    .min_h(px(160.0))
+                    .min_h(px(140.0))
                     .border_2()
                     .border_color(glass_border())
-                    .child(div().text_3xl().child("🔬"))
-                    .child(div().text_color(rgb(TEXT_PRIMARY)).child("Firmware Analyzer"))
-                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Drop a .bin file to analyze firmware contents"))
-                    .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("Detects chip type, partitions, build info, and more")),
+                    .cursor_pointer()
+                    .hover(|s| s.border_color(glass_border_hover()))
+                    .child(div().text_3xl().child("📄"))
+                    .child(div().text_color(rgb(TEXT_PRIMARY)).child("Drop a .bin file to analyze"))
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("or click to browse")),
             )
-            // Results area (empty state)
+            // Analysis results (empty state with placeholder cards)
+            .child(
+                div()
+                    .flex()
+                    .flex_wrap()
+                    .gap_4()
+                    // Chip & Image Type card
+                    .child(
+                        Self::analyzer_result_card("Chip & Image", "🔧", &[
+                            ("Chip", "—"),
+                            ("Image Type", "—"),
+                            ("Flash Size", "—"),
+                        ], primary)
+                    )
+                    // Framework card
+                    .child(
+                        Self::analyzer_result_card("Framework", "📦", &[
+                            ("Framework", "—"),
+                            ("Version", "—"),
+                        ], primary)
+                    )
+                    // Build Info card
+                    .child(
+                        Self::analyzer_result_card("Build Info", "🏗", &[
+                            ("Project", "—"),
+                            ("IDF Version", "—"),
+                            ("Compile Date", "—"),
+                        ], primary)
+                    )
+                    // Extended Header card
+                    .child(
+                        Self::analyzer_result_card("Extended Header", "📋", &[
+                            ("Entry Point", "—"),
+                            ("Segments", "—"),
+                            ("WP Pin", "—"),
+                        ], primary)
+                    ),
+            )
+            // Partition Table section
             .child(
                 glass_card_div()
-                    .p_6()
+                    .p_4()
                     .flex()
-                    .items_center()
-                    .justify_center()
-                    .min_h(px(100.0))
+                    .flex_col()
+                    .gap_2()
                     .child(
                         div()
-                            .text_sm()
+                            .flex()
+                            .items_center()
+                            .justify_between()
+                            .child(
+                                div()
+                                    .flex()
+                                    .items_center()
+                                    .gap_2()
+                                    .child(div().child("📋"))
+                                    .child(div().text_sm().text_color(rgb(TEXT_PRIMARY)).child("Partition Table")),
+                            )
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .text_color(rgb(TEXT_MUTED))
+                                    .child("Load firmware to analyze"),
+                            ),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .gap_2()
+                            .text_xs()
                             .text_color(rgb(TEXT_MUTED))
-                            .child("Analysis results will appear here..."),
+                            .py(px(4.0))
+                            .border_b_1()
+                            .border_color(glass_border())
+                            .child(div().w(px(100.0)).child("Name"))
+                            .child(div().w(px(80.0)).child("Type"))
+                            .child(div().w(px(100.0)).child("Offset"))
+                            .child(div().w(px(80.0)).child("Size")),
+                    )
+                    .child(
+                        div()
+                            .py_4()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("No firmware loaded")),
+                    ),
+            )
+            // Analysis Log (collapsible)
+            .child(
+                glass_card_div()
+                    .p_4()
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap_2()
+                            .child(div().text_xs().child("▶"))
+                            .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("Analysis Log")),
                     ),
             )
             .into_any_element()
     }
 
     fn render_partition_tab(&self) -> AnyElement {
+        let primary = self.primary();
         div()
             .id("partition-content")
             .flex_1()
@@ -331,12 +636,20 @@ impl SparkApp {
             .p_6()
             .gap_4()
             .overflow_y_scroll()
+            // Header with import/export
             .child(
                 div()
                     .flex()
                     .items_center()
                     .justify_between()
-                    .child(div().text_color(rgb(TEXT_PRIMARY)).child("Partition Table Editor"))
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap_2()
+                            .child(div().child("📋"))
+                            .child(div().text_color(rgb(TEXT_PRIMARY)).child("Partition Table Editor")),
+                    )
                     .child(
                         div()
                             .flex()
@@ -353,31 +666,29 @@ impl SparkApp {
                                     .text_color(rgb(TEXT_SECONDARY))
                                     .cursor_pointer()
                                     .hover(|s| s.bg(hsla(0., 0., 0., 0.25)))
-                                    .child("📂 Import"),
+                                    .child("📂 Import CSV"),
                             )
                             .child(
                                 div()
                                     .px_4()
                                     .py(px(6.0))
                                     .rounded_lg()
-                                    .bg(hsla(0., 0., 0., 0.15))
-                                    .border_1()
-                                    .border_color(glass_border())
+                                    .bg(rgb(primary))
                                     .text_sm()
-                                    .text_color(rgb(TEXT_SECONDARY))
+                                    .text_color(rgb(0xffffff))
                                     .cursor_pointer()
-                                    .hover(|s| s.bg(hsla(0., 0., 0., 0.25)))
-                                    .child("💾 Export"),
+                                    .hover(|s| s.opacity(0.85))
+                                    .child("💾 Export .bin"),
                             ),
                     ),
             )
-            // Partition table (mock)
+            // Partition table
             .child(
                 glass_card_div()
                     .p_4()
                     .flex()
                     .flex_col()
-                    .gap_2()
+                    .gap_1()
                     // Header row
                     .child(
                         div()
@@ -385,19 +696,269 @@ impl SparkApp {
                             .gap_2()
                             .text_xs()
                             .text_color(rgb(TEXT_MUTED))
-                            .child(div().w(px(100.0)).child("Name"))
+                            .pb_2()
+                            .border_b_1()
+                            .border_color(glass_border())
+                            .child(div().w(px(120.0)).child("Name"))
                             .child(div().w(px(80.0)).child("Type"))
-                            .child(div().w(px(100.0)).child("Address"))
-                            .child(div().w(px(80.0)).child("Size"))
-                            .child(div().flex_1().child("Flags")),
+                            .child(div().w(px(80.0)).child("SubType"))
+                            .child(div().w(px(100.0)).child("Offset"))
+                            .child(div().w(px(100.0)).child("Size"))
+                            .child(div().w(px(80.0)).child("Flags"))
+                            .child(div().w(px(40.0))),
                     )
-                    // Sample rows
-                    .child(Self::partition_row("nvs", "data", "0x9000", "20 KB", ""))
-                    .child(Self::partition_row("otadata", "data", "0xe000", "8 KB", ""))
-                    .child(Self::partition_row("app0", "app", "0x10000", "1.2 MB", ""))
-                    .child(Self::partition_row("spiffs", "data", "0x290000", "1.4 MB", "")),
+                    // Editable rows
+                    .child(Self::partition_edit_row("nvs", "data", "nvs", "0x9000", "0x5000", ""))
+                    .child(Self::partition_edit_row("otadata", "data", "ota", "0xe000", "0x2000", ""))
+                    .child(Self::partition_edit_row("app0", "app", "ota_0", "0x10000", "0x140000", ""))
+                    .child(Self::partition_edit_row("app1", "app", "ota_1", "0x150000", "0x140000", ""))
+                    .child(Self::partition_edit_row("spiffs", "data", "spiffs", "0x290000", "0x160000", ""))
+                    .child(Self::partition_edit_row("coredump", "data", "coredump", "0x3F0000", "0x10000", "")),
+            )
+            // Add partition button
+            .child(
+                div()
+                    .w_full()
+                    .py_3()
+                    .rounded_lg()
+                    .border_2()
+                    .border_color(glass_border())
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .gap_2()
+                    .cursor_pointer()
+                    .hover(|s| s.border_color(glass_border_hover()).bg(hsla(0., 0., 0., 0.05)))
+                    .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child("+ Add Partition")),
+            )
+            // Visual partition map
+            .child(
+                glass_card_div()
+                    .p_4()
+                    .flex()
+                    .flex_col()
+                    .gap_3()
+                    .child(div().text_sm().text_color(rgb(TEXT_PRIMARY)).child("Flash Memory Map"))
+                    .child(
+                        div()
+                            .w_full()
+                            .h(px(32.0))
+                            .rounded_md()
+                            .overflow_hidden()
+                            .flex()
+                            .child(div().w(px(20.0)).h_full().bg(rgb(0x6366f1)).child(
+                                div().text_xs().text_color(rgb(0xffffff)).p(px(2.0)),
+                            ))
+                            .child(div().w(px(8.0)).h_full().bg(rgb(0xf59e0b)))
+                            .child(div().flex_1().h_full().bg(rgb(0x22c55e)).flex().items_center().justify_center().child(
+                                div().text_xs().text_color(rgb(0xffffff)).child("app0"),
+                            ))
+                            .child(div().flex_1().h_full().bg(rgb(0x3b82f6)).flex().items_center().justify_center().child(
+                                div().text_xs().text_color(rgb(0xffffff)).child("app1"),
+                            ))
+                            .child(div().w(px(60.0)).h_full().bg(rgb(0xec4899)).flex().items_center().justify_center().child(
+                                div().text_xs().text_color(rgb(0xffffff)).child("spiffs"),
+                            ))
+                            .child(div().w(px(20.0)).h_full().bg(rgb(0xef4444))),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .flex_wrap()
+                            .gap_3()
+                            .child(Self::legend_item("nvs", 0x6366f1))
+                            .child(Self::legend_item("otadata", 0xf59e0b))
+                            .child(Self::legend_item("app0", 0x22c55e))
+                            .child(Self::legend_item("app1", 0x3b82f6))
+                            .child(Self::legend_item("spiffs", 0xec4899))
+                            .child(Self::legend_item("coredump", 0xef4444)),
+                    ),
             )
             .into_any_element()
+    }
+
+    // ── Helper widgets ──
+
+    fn render_console(&self, placeholder: &str) -> Div {
+        div()
+            .h(px(180.0))
+            .mx_6()
+            .mb_4()
+            .rounded_lg()
+            .bg(rgb(0x0a0a0f))
+            .border_1()
+            .border_color(hsla(0., 0., 0.2, 0.5))
+            .flex()
+            .flex_col()
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .justify_between()
+                    .px_3()
+                    .py(px(6.0))
+                    .border_b_1()
+                    .border_color(hsla(0., 0., 0.15, 0.5))
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap_2()
+                            .child(div().text_xs().text_color(rgb(0x22c55e)).child("●"))
+                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child("CONSOLE Output")),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .gap_3()
+                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).cursor_pointer().child("Auto-scroll"))
+                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).cursor_pointer().child("Copy"))
+                            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).cursor_pointer().child("Clear")),
+                    ),
+            )
+            .child(
+                div()
+                    .flex_1()
+                    .p_3()
+                    .child(div().text_xs().text_color(rgb(0x64748b)).child(format!("$ {}", placeholder))),
+            )
+    }
+
+    fn analyzer_result_card(title: &str, icon: &str, fields: &[(&str, &str)], _primary: u32) -> Div {
+        let mut card = glass_card_div()
+            .w(px(240.0))
+            .p_4()
+            .flex()
+            .flex_col()
+            .gap_3()
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap_2()
+                    .child(div().child(icon.to_string()))
+                    .child(div().text_sm().text_color(rgb(TEXT_PRIMARY)).child(title.to_string())),
+            );
+
+        for (label, value) in fields {
+            card = card.child(
+                div()
+                    .flex()
+                    .justify_between()
+                    .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child(label.to_string()))
+                    .child(div().text_xs().text_color(rgb(TEXT_SECONDARY)).child(value.to_string())),
+            );
+        }
+
+        card
+    }
+
+    fn info_row(label: &str, value: &str) -> Div {
+        div()
+            .flex()
+            .justify_between()
+            .items_center()
+            .py(px(4.0))
+            .border_b_1()
+            .border_color(hsla(0., 0., 0., 0.05))
+            .child(div().text_sm().text_color(rgb(TEXT_MUTED)).child(label.to_string()))
+            .child(div().text_sm().text_color(rgb(TEXT_SECONDARY)).child(value.to_string()))
+    }
+
+    fn partition_edit_row(name: &str, ptype: &str, subtype: &str, offset: &str, size: &str, flags: &str) -> Div {
+        div()
+            .flex()
+            .gap_2()
+            .items_center()
+            .py(px(6.0))
+            .text_sm()
+            .hover(|s| s.bg(hsla(0., 0., 0., 0.08)))
+            .rounded_md()
+            .child(
+                div()
+                    .w(px(120.0))
+                    .px_2()
+                    .py(px(4.0))
+                    .rounded_md()
+                    .bg(hsla(0., 0., 0., 0.1))
+                    .text_color(rgb(TEXT_PRIMARY))
+                    .child(name.to_string()),
+            )
+            .child(
+                div()
+                    .w(px(80.0))
+                    .px_2()
+                    .py(px(4.0))
+                    .rounded_md()
+                    .bg(hsla(0., 0., 0., 0.1))
+                    .text_color(rgb(TEXT_SECONDARY))
+                    .child(ptype.to_string()),
+            )
+            .child(
+                div()
+                    .w(px(80.0))
+                    .px_2()
+                    .py(px(4.0))
+                    .rounded_md()
+                    .bg(hsla(0., 0., 0., 0.1))
+                    .text_color(rgb(TEXT_SECONDARY))
+                    .child(subtype.to_string()),
+            )
+            .child(
+                div()
+                    .w(px(100.0))
+                    .px_2()
+                    .py(px(4.0))
+                    .rounded_md()
+                    .bg(hsla(0., 0., 0., 0.1))
+                    .text_color(rgb(TEXT_SECONDARY))
+                    .child(offset.to_string()),
+            )
+            .child(
+                div()
+                    .w(px(100.0))
+                    .px_2()
+                    .py(px(4.0))
+                    .rounded_md()
+                    .bg(hsla(0., 0., 0., 0.1))
+                    .text_color(rgb(TEXT_SECONDARY))
+                    .child(size.to_string()),
+            )
+            .child(
+                div()
+                    .w(px(80.0))
+                    .text_color(rgb(TEXT_MUTED))
+                    .child(if flags.is_empty() { "—".to_string() } else { flags.to_string() }),
+            )
+            .child(
+                div()
+                    .w(px(40.0))
+                    .flex()
+                    .justify_center()
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(rgb(TEXT_MUTED))
+                            .cursor_pointer()
+                            .hover(|s| s.text_color(rgb(0xef4444)))
+                            .child("🗑"),
+                    ),
+            )
+    }
+
+    fn legend_item(label: &str, color: u32) -> Div {
+        div()
+            .flex()
+            .items_center()
+            .gap(px(4.0))
+            .child(
+                div()
+                    .w(px(10.0))
+                    .h(px(10.0))
+                    .rounded_sm()
+                    .bg(rgb(color)),
+            )
+            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child(label.to_string()))
     }
 
     fn info_chip(label: &str, value: &str) -> Div {
@@ -411,22 +972,6 @@ impl SparkApp {
             .bg(hsla(0., 0., 0., 0.1))
             .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child(label.to_string()))
             .child(div().text_sm().text_color(rgb(TEXT_SECONDARY)).child(value.to_string()))
-    }
-
-    fn partition_row(name: &str, ptype: &str, addr: &str, size: &str, flags: &str) -> Div {
-        div()
-            .flex()
-            .gap_2()
-            .px_2()
-            .py(px(6.0))
-            .rounded_md()
-            .text_sm()
-            .hover(|s| s.bg(hsla(0., 0., 0., 0.1)))
-            .child(div().w(px(100.0)).text_color(rgb(TEXT_PRIMARY)).child(name.to_string()))
-            .child(div().w(px(80.0)).text_color(rgb(TEXT_MUTED)).child(ptype.to_string()))
-            .child(div().w(px(100.0)).text_color(rgb(TEXT_SECONDARY)).child(addr.to_string()))
-            .child(div().w(px(80.0)).text_color(rgb(TEXT_SECONDARY)).child(size.to_string()))
-            .child(div().flex_1().text_color(rgb(TEXT_MUTED)).child(flags.to_string()))
     }
 
     fn control_select(label: &str, value: &str, icon: &str) -> Div {
