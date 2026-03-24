@@ -246,6 +246,7 @@ impl SparkApp {
                     }
                     dot = dot.on_click(cx.listener(move |this, _, _, cx| {
                         this.accent_color = color;
+                        this.save_settings();
                         cx.notify();
                     }));
                     color_row = color_row.child(dot);
@@ -303,6 +304,7 @@ impl SparkApp {
             let enabled = self.glass_enabled;
             let toggle = Self::toggle_switch("glass-toggle", enabled, cx, |this, cx| {
                 this.glass_enabled = !this.glass_enabled;
+                this.save_settings();
                 cx.notify();
             }, primary);
             let label = if enabled {
@@ -330,6 +332,7 @@ impl SparkApp {
             let enabled = self.sound_enabled;
             let toggle = Self::toggle_switch("sound-toggle", enabled, cx, |this, cx| {
                 this.sound_enabled = !this.sound_enabled;
+                this.save_settings();
                 cx.notify();
             }, primary);
             let label = if enabled {
@@ -668,6 +671,7 @@ impl SparkApp {
                     let toggle =
                         Self::toggle_switch("dev-mode-toggle", enabled, cx, |this, cx| {
                             this.developer_mode = !this.developer_mode;
+                            this.save_settings();
                             cx.notify();
                         }, primary);
                     advanced_items = advanced_items.child(

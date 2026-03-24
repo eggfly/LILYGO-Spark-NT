@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use gpui::*;
+use serde::{Deserialize, Serialize};
 
 use crate::i18n::{I18n, Language};
 use crate::manifest::{self, FlatProduct, FirmwareItem, Manifest};
@@ -169,8 +170,77 @@ pub struct SparkApp {
     pub page_transition_id: usize,
 }
 
+/// Persisted settings that survive app restart
+#[derive(Serialize, Deserialize, Default)]
+struct PersistedSettings {
+    language: Option<String>,
+    accent_color: Option<String>,
+    glass_enabled: Option<bool>,
+    sound_enabled: Option<bool>,
+    developer_mode: Option<bool>,
+}
+
+impl PersistedSettings {
+    fn config_path() -> std::path::PathBuf {
+        let dir = dirs_next().unwrap_or_else(|| std::path::PathBuf::from("."));
+        dir.join("settings.json")
+    }
+
+    fn load() -> Self {
+        let path = Self::config_path();
+        std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default()
+    }
+
+    fn save(&self) {
+        let path = Self::config_path();
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        if let Ok(json) = serde_json::to_string_pretty(self) {
+            let _ = std::fs::write(&path, json);
+        }
+    }
+}
+
+fn dirs_next() -> Option<std::path::PathBuf> {
+    #[cfg(target_os = "macos")]
+    {
+        std::env::var("HOME").ok().map(|h| {
+            std::path::PathBuf::from(h)
+                .join("Library")
+                .join("Application Support")
+                .join("LILYGO Spark NT")
+        })
+    }
+    #[cfg(target_os = "windows")]
+    {
+        std::env::var("APPDATA")
+            .ok()
+            .map(|h| std::path::PathBuf::from(h).join("LILYGO Spark NT"))
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::env::var("HOME")
+            .ok()
+            .map(|h| std::path::PathBuf::from(h).join(".config").join("lilygo-spark-nt"))
+    }
+}
+
 impl SparkApp {
     pub fn new() -> Self {
+        let saved = PersistedSettings::load();
+
+        let language = saved.language.as_deref()
+            .and_then(|code| Language::ALL.iter().find(|l| l.code() == code).copied())
+            .unwrap_or_else(Language::from_system);
+
+        let accent_color = saved.accent_color.as_deref()
+            .and_then(|id| AccentColor::ALL.iter().find(|c| c.id() == id).copied())
+            .unwrap_or(AccentColor::Violet);
+
         Self {
             current_page: Page::FirmwareCenter,
             manifest: Manifest::default(),
@@ -181,17 +251,17 @@ impl SparkApp {
             only_with_firmware: true,
             manifest_loading: true,
             manifest_error: None,
-            i18n: I18n::new(Language::from_system()),
+            i18n: I18n::new(language),
             settings_tab: SettingsTab::Settings,
             theme_preference: ThemePreference::System,
             accent_mode: AccentMode::Rotating,
-            accent_color: AccentColor::Violet,
+            accent_color,
             link_open_mode: LinkOpenMode::Internal,
-            glass_enabled: true,
-            sound_enabled: true,
+            glass_enabled: saved.glass_enabled.unwrap_or(true),
+            sound_enabled: saved.sound_enabled.unwrap_or(true),
             flash_celebration_style: FlashCelebrationStyle::Fireworks,
             advanced_expanded: false,
-            developer_mode: false,
+            developer_mode: saved.developer_mode.unwrap_or(false),
             canary_update: false,
             active_lab_tab: 0,
             active_tool_idx: 0,
@@ -259,7 +329,19 @@ impl SparkApp {
 
     pub fn set_language(&mut self, language: Language, cx: &mut Context<Self>) {
         self.i18n.set_language(language);
+        self.save_settings();
         cx.notify();
+    }
+
+    pub fn save_settings(&self) {
+        let settings = PersistedSettings {
+            language: Some(self.i18n.language.code().to_string()),
+            accent_color: Some(self.accent_color.id().to_string()),
+            glass_enabled: Some(self.glass_enabled),
+            sound_enabled: Some(self.sound_enabled),
+            developer_mode: Some(self.developer_mode),
+        };
+        settings.save();
     }
 
     pub fn filtered_products(&self) -> Vec<(usize, &FlatProduct)> {
