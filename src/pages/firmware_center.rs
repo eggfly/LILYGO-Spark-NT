@@ -292,8 +292,18 @@ impl SparkApp {
                             .flex()
                             .flex_col()
                             .gap_3()
-                            .child(
+                            .child({
+                                let search_text = self.search_query.clone();
+                                let placeholder = self.i18n.t("fc.search").to_string();
+                                let display_text = if search_text.is_empty() {
+                                    format!("🔍 {}", placeholder)
+                                } else {
+                                    format!("🔍 {}", search_text)
+                                };
+                                let text_color = if search_text.is_empty() { TEXT_MUTED } else { TEXT_PRIMARY };
+
                                 div()
+                                    .id("search-input")
                                     .flex()
                                     .items_center()
                                     .px_3()
@@ -302,13 +312,48 @@ impl SparkApp {
                                     .bg(hsla(0., 0., 0., 0.2))
                                     .border_1()
                                     .border_color(glass_border())
+                                    .cursor_text()
+                                    .on_key_down(cx.listener(|this, event: &KeyDownEvent, _, cx| {
+                                        let key = &event.keystroke.key;
+                                        if key == "backspace" {
+                                            this.search_query.pop();
+                                            cx.notify();
+                                        } else if key == "escape" {
+                                            this.search_query.clear();
+                                            cx.notify();
+                                        } else if let Some(ch) = &event.keystroke.key_char {
+                                            if !event.keystroke.modifiers.platform
+                                                && !event.keystroke.modifiers.control
+                                            {
+                                                this.search_query.push_str(ch);
+                                                cx.notify();
+                                            }
+                                        }
+                                    }))
                                     .child(
                                         div()
                                             .text_sm()
-                                            .text_color(rgb(TEXT_MUTED))
-                                            .child(format!("🔍 {}", self.i18n.t("fc.search"))),
-                                    ),
-                            )
+                                            .text_color(rgb(text_color))
+                                            .child(display_text),
+                                    )
+                                    .when(!search_text.is_empty(), |d| {
+                                        d.child(
+                                            div().flex_1()
+                                        ).child(
+                                            div()
+                                                .id("search-clear")
+                                                .text_xs()
+                                                .text_color(rgb(TEXT_MUTED))
+                                                .cursor_pointer()
+                                                .hover(|s| s.text_color(rgb(TEXT_PRIMARY)))
+                                                .on_click(cx.listener(|this, _, _, cx| {
+                                                    this.search_query.clear();
+                                                    cx.notify();
+                                                }))
+                                                .child("✕"),
+                                        )
+                                    })
+                            })
                             .child({
                                 let is_checked = self.only_with_firmware;
                                 let primary = self.primary();
